@@ -30,7 +30,7 @@ jobs:
 
       # Step 5: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4.0.0
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages  # 部署到 gh-pages 分支
           folder: dist  # 要部署的文件夹，这里是 Vue 项目的 dist 目录
