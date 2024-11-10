@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 const algs = ref(["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"])
 const selected_alg = ref("HS256")
 const sjwt = ref("")
@@ -7,17 +7,107 @@ const tjwt = ref("")
 const header = ref("")
 const payload = ref("")
 const verify_signature = ref("")
+const signature_type = ref("")
+
+const algs_map: { [key: string]: string } = {
+    "HS256": `HMACSHA256(
+    base64UrlEncode(header) + "." +
+    base64UrlEncode(payload),  
+    your-256-bit-secret
+) OR secret base64 encoded`,
+    "HS384": `HMACSHA384(
+    base64UrlEncode(header) + "." +
+    base64UrlEncode(payload),
+    your-384-bit-secret
+) OR secret base64 encoded`,
+    "HS512": `HMACSHA512(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  your-512-bit-secret
+) OR secret base64 encoded`,
+    "RS256": `RSASHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "RS384": `RSASHA384(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "RS512": `RSASHA512(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "ES256": `ECDSASHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "ES384": `ECDSASHA384(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "ES512": `ECDSASHA512(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "PS256": `RSAPSSSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "PS384": `RSAPSSSHA384(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+    "PS512": `RSAPSSSHA512(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  PUBLIC KEY, 
+  PRIVATE KEY
+)`,
+}
+
+const select_alg = () => {
+
+    let k: string = selected_alg.value
+    signature_type.value = ""
+    signature_type.value = algs_map[k]
+
+}
 
 const decodeJwt = () => {
+
     let jwt = sjwt.value.trim().split(".")
     if (jwt.length > 3) {
         alert("Invalid JWT format!")
         return
     }
-    console.log(jwt)
+
     if (jwt.length >= 1 && jwt[0]) {
-        let h = JSON.stringify(JSON.parse(atob(jwt[0])), null, 2)
-        header.value = h
+        let hh = JSON.parse(atob(jwt[0]))
+
+        if (hh.alg) {
+            if (algs.value.includes(hh.alg)) {
+                selected_alg.value = hh.alg
+                select_alg()
+            }
+        }
+
+        header.value = JSON.stringify(hh, null, 2)
     }
 
     if (jwt.length >= 2 && jwt[1]) {
@@ -59,6 +149,18 @@ const encodeJwt = () => {
     }
 }
 
+const clearJwt = () => {
+    tjwt.value = ""
+    header.value = ""
+    payload.value = ""
+    signature_type.value = ""
+}
+
+onMounted(() => {
+    sjwt.value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.7aB3f5gF-3B44E8aWo063ryJYjOmZEvjkMbSXRfyos4"
+    decodeJwt()
+    encodeJwt()
+})
 </script>
 <template>
     <div class="d-flex justify-center">
@@ -66,16 +168,24 @@ const encodeJwt = () => {
 
             <div class="d-flex justify-space-between mt-10">
 
-                <v-btn @click="decodeJwt" variant="text">
+                <v-btn @mousedown="(event: MouseEvent) => {
+                    console.log(event.button)
+                    if (event.button === 0) {
+                        decodeJwt()
+                    } else if (event.button === 1) {
+                        clearJwt()
+                    }
+                }" variant="text">
                     <h1>JWT-ALL</h1>
                 </v-btn>
 
-                <p>Click me to decode jwt!</p>
+                <p>Click <b>JWT-ALL</b> to decode jwt! Middle to Clear!</p>
+
 
                 <div class="w-33"></div>
 
-                <v-select width="100px" label="Alg" :model-value="selected_alg" :items=algs
-                    variant="outlined"></v-select>
+                <v-select width="100px" label="Alg" v-model="selected_alg" :items=algs variant="outlined"
+                    @vue:mounted="select_alg" @update:model-value="select_alg"></v-select>
             </div>
 
             <div>
@@ -85,7 +195,8 @@ const encodeJwt = () => {
                         @blur="encodeJwt"></v-textarea>
                     <v-textarea rows="10" class="mr-2" label="Payload" variant="outlined" no-resize v-model="payload"
                         @blur="encodeJwt"></v-textarea>
-                    <v-textarea rows="10" label="Verify Signature" variant="outlined" no-resize></v-textarea>
+                    <v-textarea rows="10" label="Verify Signature" variant="outlined" no-resize v-model="signature_type"
+                        readonly></v-textarea>
                 </div>
             </div>
 
