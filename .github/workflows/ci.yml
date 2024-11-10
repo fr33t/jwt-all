@@ -3,36 +3,36 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # 监听 main 分支的推送
+      - main  # 当推送到 main 分支时触发
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code from the repository
+      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up Node.js environment
+      # Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '23'  # 你可以根据需求设置 Node.js 版本
+          node-version: '23'  # 使用适合 Vue 项目的 Node 版本
 
-      # Step 3: Install dependencies
+      # Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # Step 4: Build the project
-      - name: Build the project
+      # Build the Vue project
+      - name: Build Vue project
         run: npm run build
 
-      # Step 5: Deploy to GitHub Pages
+      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages  # 部署到 gh-pages 分支
-          folder: dist  # 要部署的文件夹，这里是 Vue 项目的 dist 目录
+          folder: dist  # 构建后的文件夹（默认为 dist）
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 提供的自动身份验证令牌
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 提供的自动化 token
