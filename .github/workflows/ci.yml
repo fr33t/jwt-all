@@ -9,6 +9,9 @@ on:
     
 jobs:
   build:
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -22,11 +25,3 @@ jobs:
       run: npm run build
     - name: Deploy GitHub Pages site
       uses: actions/deploy-pages@v4.0.5
-      with:
-        token: ${{ github.token }}
-          
-
-
-
-
-
