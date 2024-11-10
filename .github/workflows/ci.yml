@@ -12,13 +12,13 @@ jobs:
     steps:
       # Checkout the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Set up Node.js environment
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4.1.0
         with:
-          node-version: '23'  # 使用适合 Vue 项目的 Node 版本
+          node-version: '23.x'  # 使用适合 Vue 项目的 Node 版本
 
       # Install dependencies
       - name: Install dependencies
@@ -30,9 +30,6 @@ jobs:
 
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@v4.6.9
         with:
-          branch: gh-pages  # 部署到 gh-pages 分支
           folder: dist  # 构建后的文件夹（默认为 dist）
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 提供的自动化 token
