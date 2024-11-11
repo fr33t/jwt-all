@@ -4,4 +4,4 @@
 # 在线地址
 [JWT-ALL](https://fr33t.github.io/jwt-all/)
 
-![image](https://github.com/user-attachments/assets/8dfe6eac-d7b2-450c-94dd-f0d42176306c)
+![fr33t github io_jwt-all_ (1)](https://github.com/user-attachments/assets/00e76f2b-0f4e-4c96-bb45-47f234459d32)
