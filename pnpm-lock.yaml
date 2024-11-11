@@ -21,7 +21,7 @@ importers:
         specifier: ^3.4.31
         version: 3.5.12(typescript@5.6.3)
       vuetify:
-        specifier: ^3.6.11
+        specifier: ^3.7.4
         version: 3.7.4(typescript@5.6.3)(vite-plugin-vuetify@2.0.4)(vue@3.5.12(typescript@5.6.3))
     devDependencies:
       '@babel/types':
