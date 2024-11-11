@@ -89,6 +89,11 @@ const select_alg = () => {
     let k: string = selected_alg.value
     signature_type.value = ""
     signature_type.value = algs_map[k]
+    let h = JSON.parse(header.value)
+    if (h.alg) {
+        h.alg = k
+        header.value = JSON.stringify(h, null, 2)
+    }
 
 }
 
