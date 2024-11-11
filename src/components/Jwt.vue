@@ -188,6 +188,7 @@ const none_attack = () => {
 }
 const no_sign_attack = () => {
     verify_signature.value = ""
+    jwt_secret_key.value = ""
     none_attack()
     tjwt.value += "."
 }
