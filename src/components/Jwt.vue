@@ -123,18 +123,25 @@ const decodeJwt = () => {
     // let a = JSON.stringify(JSON.parse(h))
 }
 
+const base64UrlEncode = (str: string) => {
+    // 将 Base64 编码转换为 Base64Url
+    let base64 = btoa(str); // 先进行标准 Base64 编码
+    base64 = base64.replace(/\+/g, '-').replace(/\//g, '_'); // 替换 Base64 特有的字符
+    return base64.replace(/=+$/, ''); // 去掉填充字符
+}
+
 const encodeJwt = () => {
     let t = ""
     try {
         let h = header.value
         if (h) {
-            let header_b64 = btoa(JSON.stringify(JSON.parse(h)))
+            let header_b64 = base64UrlEncode(JSON.stringify(JSON.parse(h)))
             t += header_b64
         }
 
         let p = payload.value
         if (p) {
-            let payload_b64 = btoa(JSON.stringify(JSON.parse(p)))
+            let payload_b64 = base64UrlEncode(JSON.stringify(JSON.parse(p)))
             t += "." + payload_b64
         }
 
