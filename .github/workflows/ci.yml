@@ -22,13 +22,17 @@ jobs:
         with:
           node-version: '23.x'  # 使用适合 Vue 项目的 Node 版本
 
-      # Install dependencies
-      - name: Install dependencies
-        run: npm install
+      # Install pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm  # 安装 pnpm
 
-      # Build the Vue project
+      # Install dependencies using pnpm
+      - name: Install dependencies
+        run: pnpm install  # 使用 pnpm 安装依赖
+
+      # Build the Vue project using pnpm
       - name: Build Vue project
-        run: npm run build
+        run: pnpm run build  # 使用 pnpm 进行构建
 
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
