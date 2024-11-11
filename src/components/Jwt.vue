@@ -182,6 +182,7 @@ const none_attack = () => {
     let h = JSON.parse(header.value)
     if (h.alg) {
         h.alg = "none"
+        jwt_secret_key.value = ""
         header.value = JSON.stringify(h, null, 2)
         encodeJwt()
     }
