@@ -89,11 +89,14 @@ const select_alg = () => {
     let k: string = selected_alg.value
     signature_type.value = ""
     signature_type.value = algs_map[k]
-    let h = JSON.parse(header.value)
-    if (h.alg) {
-        h.alg = k
-        header.value = JSON.stringify(h, null, 2)
+    if (header.value) {
+        let h = JSON.parse(header.value)
+        if (h.alg) {
+            h.alg = k
+            header.value = JSON.stringify(h, null, 2)
+        }
     }
+    encodeJwt()
 
 }
 
@@ -171,7 +174,7 @@ const encodeJwt = async () => {
         }
         tjwt.value = t
     } catch (e) {
-        alert("Invalid Modified JWT format!")
+        alert(`${e}`)
     }
 }
 
@@ -255,8 +258,6 @@ onMounted(async () => {
     jwt_secret_key.value = "secure"
     decodeJwt()
     encodeJwt()
-    // const res = await fetch("jwt.secrets.list")
-    // let list = await res.text()
 })
 </script>
 <template>
