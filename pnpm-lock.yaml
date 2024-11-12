@@ -14,6 +14,9 @@ importers:
       jose:
         specifier: ^5.9.6
         version: 5.9.6
+      node-forge:
+        specifier: ^1.3.1
+        version: 1.3.1
       roboto-fontface:
         specifier: '*'
         version: 0.10.0
@@ -30,6 +33,9 @@ importers:
       '@types/node':
         specifier: ^20.14.10
         version: 20.17.6
+      '@types/node-forge':
+        specifier: ^1.3.11
+        version: 1.3.11
       '@vitejs/plugin-vue':
         specifier: ^5.0.5
         version: 5.1.4(vite@5.4.10(@types/node@20.17.6)(sass@1.77.6))(vue@3.5.12(typescript@5.6.3))
@@ -344,6 +350,9 @@ packages:
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
 
+  '@types/node-forge@1.3.11':
+    resolution: {integrity: sha512-FQx220y22OKNTqaByeBGqHWYz4cl94tpcxeFdvBo3wjG6XPBuZ0BNgNZRV5J5TFmmcsJ4IzsLkmGRiQbnYsBEQ==}
+
   '@types/node@20.17.6':
     resolution: {integrity: sha512-VEI7OdvK2wP7XHnsuXbAJnEpEkF6NjSN45QJlL4VGqZSXsnicpesdTWsg9RISeSdYd3yeRj/y3k5KGjUXYnFwQ==}
 
@@ -547,6 +556,10 @@ packages:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  node-forge@1.3.1:
+    resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
+    engines: {node: '>= 6.13.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -903,6 +916,10 @@ snapshots:
 
   '@types/estree@1.0.6': {}
 
+  '@types/node-forge@1.3.11':
+    dependencies:
+      '@types/node': 20.17.6
+
   '@types/node@20.17.6':
     dependencies:
       undici-types: 6.19.8
@@ -1148,6 +1165,8 @@ snapshots:
   muggle-string@0.4.1: {}
 
   nanoid@3.3.7: {}
+
+  node-forge@1.3.1: {}
 
   normalize-path@3.0.0: {}
 

